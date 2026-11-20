@@ -101,6 +101,25 @@ func CountCommits(user string, gist string) (string, error) {
 	return strings.TrimSuffix(string(stdout), "\n"), err
 }
 
+func RepositorySize(user, gist string) (uint64, error) {
+	var size uint64
+	err := filepath.WalkDir(RepositoryPath(user, gist), func(_ string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.Type().IsRegular() {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		size += uint64(info.Size())
+		return nil
+	})
+	return size, err
+}
+
 func GetFilesOfRepository(user string, gist string, revision string) ([]string, error) {
 	repositoryPath := RepositoryPath(user, gist)
 

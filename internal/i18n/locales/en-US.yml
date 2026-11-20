@@ -20,6 +20,7 @@ gist.header.code: Code
 gist.header.more-actions: More actions
 gist.header.revisions: Revisions
 gist.header.revision: Revision
+gist.header.size: Size
 gist.header.clone-http: Clone via %s
 gist.header.clone-http-help: Clone with Git using HTTP basic authentication.
 gist.header.clone-ssh: Clone via SSH

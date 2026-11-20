@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -536,6 +537,12 @@ func gistInit(next Handler) Handler {
 			return ctx.ErrorRes(500, "Error fetching number of commits", err)
 		}
 		ctx.SetData("nbCommits", nbCommits)
+
+		size, err := gist.Size()
+		if err != nil {
+			return ctx.ErrorRes(500, "Error fetching repository size", err)
+		}
+		ctx.SetData("gistSize", humanize.IBytes(size))
 
 		if currUser != nil {
 			hasLiked, err := currUser.HasLiked(gist)

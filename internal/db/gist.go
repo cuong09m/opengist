@@ -844,6 +844,10 @@ func (gist *Gist) NbCommits() (string, error) {
 	return git.CountCommits(gist.User.Username, gist.Uuid)
 }
 
+func (gist *Gist) Size() (uint64, error) {
+	return git.RepositorySize(gist.User.Username, gist.Uuid)
+}
+
 func (gist *Gist) AddAndCommitFiles(files *[]FileDTO) error {
 	gistTmpId, err := git.CloneTmp(gist.User.Username, gist.Uuid, gist.User.Email, true)
 	if err != nil {

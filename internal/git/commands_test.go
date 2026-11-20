@@ -2,6 +2,7 @@ package git
 
 import (
 	"bufio"
+	"crypto/rand"
 	"github.com/stretchr/testify/require"
 	"github.com/thomiceli/opengist/internal/config"
 	"os"
@@ -107,6 +108,39 @@ func TestCommits(t *testing.T) {
 	nbCommits, err = CountCommits("thomas", "gist1")
 	require.NoError(t, err, "Could not count commits")
 	require.Equal(t, "2", nbCommits, "Repository should have 2 commits")
+}
+
+func TestRepositorySize(t *testing.T) {
+	SetupTest(t)
+	defer TeardownTest(t)
+
+	size, err := RepositorySize("thomas", "gist1")
+	require.NoError(t, err)
+	require.Positive(t, size, "A new repository should use disk space")
+
+	// Random data keeps Git compression from hiding the added disk usage.
+	content := make([]byte, 10*1024)
+	_, err = rand.Read(content)
+	require.NoError(t, err)
+	CommitToBare(t, "thomas", "gist1", map[string]string{"large.bin": string(content)})
+
+	newSize, err := RepositorySize("thomas", "gist1")
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, newSize, size+uint64(len(content)))
+
+	target := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(target, "file"), content, 0644))
+	repositoryPath := RepositoryPath("thomas", "gist1")
+	require.NoError(t, os.Symlink(target, filepath.Join(repositoryPath, "linked-dir")))
+	require.NoError(t, os.Symlink(filepath.Join(target, "file"), filepath.Join(repositoryPath, "linked-file")))
+	require.NoError(t, os.Symlink(filepath.Join(target, "missing"), filepath.Join(repositoryPath, "broken-link")))
+
+	sizeWithLinks, err := RepositorySize("thomas", "gist1")
+	require.NoError(t, err)
+	require.Equal(t, newSize, sizeWithLinks, "Symlinks should not add to repository size")
+
+	_, err = RepositorySize("thomas", "missing")
+	require.ErrorIs(t, err, os.ErrNotExist)
 }
 
 func TestContent(t *testing.T) {
